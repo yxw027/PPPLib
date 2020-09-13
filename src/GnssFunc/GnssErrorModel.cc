@@ -86,10 +86,12 @@ namespace PPPLib{
     Vector4d cTrpDelayModel::EstTrpWet(double humi,double *x,int it) {
         GetSaasTrp(humi, nullptr, nullptr);
         TrpMapNeil(sat_info_->t_tag,sat_info_->el_az[0]);
+
+        double grad_n=0.0,grad_e=0.0;
         if(PPPLibC_.gnssC.trp_opt==TRP_EST_GRAD&&sat_info_->el_az[0]>0){
             double cotz=1.0/tan(sat_info_->el_az[0]);
-            double grad_n=slant_trp_wet_[1]*cotz*cos(sat_info_->el_az[1]);
-            double grad_e=slant_trp_wet_[1]*cotz*sin(sat_info_->el_az[1]);
+            grad_n=slant_trp_wet_[1]*cotz*cos(sat_info_->el_az[1]);
+            grad_e=slant_trp_wet_[1]*cotz*sin(sat_info_->el_az[1]);
             slant_trp_wet_[1]+=grad_n*x[it+1]+grad_e*x[it+2];
             slant_trp_wet_[2]=grad_n*x[it+1];
             slant_trp_wet_[3]=grad_e*x[it+2];

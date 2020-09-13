@@ -14,8 +14,8 @@ target_link_libraries(test_PPK PPPLib)
 add_executable(test_LC_FUSION test_LC_FUSION.cc)
 target_link_libraries(test_LC_FUSION PPPLib)
 
-add_executable(test_TC_FUSION test_TC_FUSION.cc)
-target_link_libraries(test_TC_FUSION PPPLib)
+#add_executable(test_TC_FUSION test_TC_FUSION.cc)
+#target_link_libraries(test_TC_FUSION PPPLib)
 
 add_executable(FormatFiles FormatFiles.cc)
 target_link_libraries(FormatFiles PPPLib)

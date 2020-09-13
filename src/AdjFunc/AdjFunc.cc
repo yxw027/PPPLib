@@ -64,7 +64,8 @@ namespace PPPLib {
         }
 
 #if 0
-     cout<<H_.transpose()<<endl;
+        cout<<X_.transpose()<<endl;
+        cout<<H_.transpose()<<endl;
 
 #endif
 

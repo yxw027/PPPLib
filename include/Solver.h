@@ -148,6 +148,7 @@ namespace PPPLib{
         void StateTimeUpdate(tPPPLibConf C);
         int GnssObsRes(int post,tPPPLibConf C,double *x) override;
 
+        void DisableX(int iter,VectorXd& x,vector<int>&par_idx,vector<double>& back_values);
         bool PppResidualQc(vector<double>omcs,vector<double>R);
         bool PppResIGG3Control(int iter,vector<double>omcs,vector<double> R);
         void AverageLcAmb();

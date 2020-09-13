@@ -1015,7 +1015,7 @@ namespace PPPLib{
     bool cPppSolver::SolverProcess(tPPPLibConf C,int idx) {
         double rate=0.0;
         char buff[MAX_BUFF]={'\0'};
-        if(idx!=-1) InitSolver(C);
+        if(idx==-1) InitSolver(C);
 
         int i=0,num_epochs=rover_obs_.epoch_num;
         if(idx!=-1){
@@ -1045,7 +1045,7 @@ namespace PPPLib{
         LOG(INFO)<<" TOTAL EPOCH: "<<rover_obs_.epoch_num<<", SOLVE SUCCESS EPOCH: "<<epoch_ok_<<", SOLVE FAILED EPOCH: "<<epoch_fail_;
     }
 
-    bool cPppSolver::SolverEpoch() {
+    bool cPppSolver:: SolverEpoch() {
         InitSppSolver();
         if(spp_solver_->SolverEpoch()){
 
@@ -1087,19 +1087,24 @@ namespace PPPLib{
         // residuals
         VectorXd x;
         MatrixXd Px;
+        vector<int>par_idx;
+        vector<double>back_values;
         int iter;
         for(iter=0;iter<max_iter_;iter++){
+
             x=full_x_;
             Px=full_Px_;
 
             if(!GnssObsRes(0,C,x.data())){
-                LOG(WARNING)<<epoch_sat_info_collect_[0].t_tag.GetTimeStr(1)<<" MAKE PPP PRIOR RESIDUAL ERROR";
-                return false;
+                par_idx.clear(),back_values.clear();
+                continue;
             }
 
             kf_.Adjustment(omc_L_,H_,R_,x,Px,num_L_,num_full_x_);
 
-            if(GnssObsRes(iter+1,C,x.data())) continue;
+            if(GnssObsRes(iter+1,C,x.data())) {
+                continue;
+            }
             else{
                 full_x_=x;
                 full_Px_=Px;
@@ -1282,7 +1287,7 @@ namespace PPPLib{
                     full_Px_(ia,ia)+=C.gnssC.ait_psd[0]*fabs(dt);
                 }
 
-                if(bias[i]==0.0||(full_x_[ia]!=0.0&&!slip[i])) continue;
+                if(bias[i]==0.0||(full_x_[ia]!=0.0&&!slip[i]&&full_x_[ia]!=DIS_FLAG)) continue;
 
                 InitX(bias[i],SQR(60.0),ia,full_x_.data(),full_Px_.data());
                 string s="UC-L";
@@ -1327,7 +1332,7 @@ namespace PPPLib{
         double ion;
         for(int i=0;i<MAX_SAT_NUM;i++){
             ii=para_.IndexIon(i+1);
-            if(full_x_[ii]!=0.0&&previous_sat_info_[i].outc[0]>120){
+            if(full_x_[ii]!=0.0&&previous_sat_info_[i].outc[0]>120||full_x_[ii]==DIS_FLAG){
                 full_x_[ii]=0.0;
             }
         }
@@ -1369,7 +1374,8 @@ namespace PPPLib{
         else{
             full_Px_(it,it)+=C.gnssC.ait_psd[2]*tt;
             if(C.gnssC.trp_opt==TRP_EST_GRAD){
-                full_Px_(it+1,it+1)=full_Px_(it+1,it+1)+=C.gnssC.ait_psd[2]*0.1*tt;
+                full_Px_(it+1,it+1)+=10E-14*tt;
+                full_Px_(it+2,it+2)+=10E-14*tt;
             }
         }
     }
@@ -1576,7 +1582,7 @@ namespace PPPLib{
         for(int i=0;i<epoch_sat_info_collect_.size();i++){
             sat_info=&epoch_sat_info_collect_.at(i);
 
-            gnss_obs_operator_.LliCycleSlip(C,*sat_info,2,dt,REC_ROVER);
+            gnss_obs_operator_.LliCycleSlip(C,*sat_info,para_.GetGnssUsedFrqs(),dt,REC_ROVER);
             if(sat_info->sat.sat_.sys!=SYS_GLO) gnss_obs_operator_.MwCycleSlip(C,C.gnssC.sample_rate,dt,sat_info, nullptr,previous_sat_info_[sat_info->sat.sat_.no-1].t_tag.t_);
             gnss_obs_operator_.GfCycleSlip(C,C.gnssC.sample_rate,dt,sat_info, nullptr);
             if(sat_info->sat.sat_.sys!=SYS_GLO) gnss_obs_operator_.SmoothMw(C,sat_info, nullptr);
@@ -1612,7 +1618,7 @@ namespace PPPLib{
         if(C.gnssC.frq_opt==FRQ_TRIPLE&&C.gnssC.ion_opt==ION_IF) num_used_frq=1;
 
         double sat_clk,cbias,trp_del,alpha,beta;
-        int m,idx_isb,idx_gps_clk=para_.IndexClk(SYS_INDEX_GPS),idx_ifcb,ii;
+        int m,idx_isb,idx_gps_clk=para_.IndexClk(SYS_INDEX_GPS),idx_ifcb,ii=0,ia;
         double base_rec_clk=0.0,isb=0.0,rec_clk=0.0,glo_ifcb=0.0;
         for(int i=0;i<epoch_sat_info_collect_.size();i++){
 
@@ -1772,7 +1778,6 @@ namespace PPPLib{
 
                 //Ambiguity
                 if(obs_type==GNSS_OBS_PHASE||(C.gnssC.frq_opt==FRQ_SINGLE&&C.gnssC.ion_opt==ION_IF&&obs_type==GNSS_OBS_CODE)){
-                    int ia;
                     if(C.gnssC.frq_opt==FRQ_TRIPLE&&C.gnssC.ion_opt==ION_IF){
                         if(sat_info->tf_if_idx[0]==1){
                             ia=para_.IndexAmb(frq,sat_info->sat.sat_.no);
@@ -1830,37 +1835,35 @@ namespace PPPLib{
                     if(obs_type==GNSS_OBS_CODE) sat_info->stat=SAT_PRI_RES_C;
                     else sat_info->stat=SAT_PRI_RES_P;
                     LOG(WARNING)<<sat_info->t_tag.GetTimeStr(1)<<" "<<sat_info->sat.sat_.id<<" DETECTING OUTLIER IN PRIOR RESIDUALS "<<(obs_type==GNSS_OBS_CODE?"P":"L")<<frq+1<<"= "<<omc;
-                    continue;
-                }
-
-                if(obs_type==GNSS_OBS_PHASE&&!post&&sat_info->sat.sat_.sys==SYS_BDS){
-//                    if(fabs(omc-omcs.back())>7.0){
-//                        sat_info->stat=SAT_LAR_CP_DIFF;
-//                        LOG(WARNING)<<sat_info->t_tag.GetTimeStr(1)<<"("<<epoch_idx_<<")"<<" "<<sat_info->sat.sat_.id<<" CODE AND PHASE PRIOR RESIDUAL SIGNIFICANT DIFFERENCE code_res="<<omc<<" phase_res="<<omcs.back();
-//                        continue;
-//                    }
+                    return 0;
                 }
 
                 omcs.push_back(omc);
                 meas_var_vec.push_back(meas_var);
 
-                if(post&&C.gnssC.res_qc&&fabs(omc)>sqrt(meas_var)*3.0){
-//                    have_larger_res=true;
-//                    larger_omcs.push_back(omc);
-//                    idxs.push_back(i);
-//                    frqs.push_back(frq);
-//                    types.push_back(obs_type);
-//                    LOG(DEBUG)<<sat_info->t_tag.GetTimeStr(1)<<"("<<epoch_idx_<<") "<<sat_info->sat.sat_.id<<" "<<(obs_type==GNSS_OBS_CODE?"P":"L")
-//                                <<frq+1<<" LARGER POST RESIDUAL res="<<omc<<" thres="<<sqrt(meas_var)*5.0;
+                if(post&&C.gnssC.res_qc&&fabs(omc)>sqrt(meas_var)*5.0){
+                    have_larger_res=true;
+                    larger_omcs.push_back(omc);
+                    idxs.push_back(i);
+                    frqs.push_back(frq);
+                    types.push_back(obs_type);
+                    LOG(DEBUG)<<sat_info->t_tag.GetTimeStr(1)<<"("<<epoch_idx_<<") "<<sat_info->sat.sat_.id<<" "<<(obs_type==GNSS_OBS_CODE?"P":"L")
+                                <<frq+1<<" LARGER POST RESIDUAL res="<<omc<<" thres="<<sqrt(meas_var)*5.0;
                 }
 
                 if(!post){
                     if(obs_type==GNSS_OBS_CODE)  sat_info->prior_res_P[frq]=omc;
-                    if(obs_type==GNSS_OBS_PHASE) sat_info->prior_res_L[frq]=omc;
+                    if(obs_type==GNSS_OBS_PHASE){
+                        sat_info->prior_res_L[frq]=omc;
+                    }
+
                 }
                 else{
                     if(obs_type==GNSS_OBS_CODE)  sat_info->post_res_P[frq]=omc;
-                    if(obs_type==GNSS_OBS_PHASE) sat_info->post_res_L[frq]=omc;
+                    if(obs_type==GNSS_OBS_PHASE){
+                        sat_info->post_res_L[frq]=omc;
+                        sat_info->float_amb[frq]=amb;
+                    }
                 }
 
                 sat_info->vsat[frq]=1;
@@ -1873,11 +1876,6 @@ namespace PPPLib{
             }
         }
 
-        if(post&&ppp_conf_.gnssC.res_qc&&!(C.gnssC.frq_opt==FRQ_SINGLE&&C.gnssC.ion_opt==ION_IF)){
-            if(PppResidualQc(omcs,meas_var_vec)){
-                have_larger_res=true;
-            }
-        }
 
         if(!post){
             omc_L_=Map<VectorXd>(omcs.data(),num_L_);
@@ -1893,11 +1891,66 @@ namespace PPPLib{
             epoch_sat_info_collect_[idxs[idx_max_omc]].stat=types[idx_max_omc]==GNSS_OBS_CODE?SAT_POS_RES_C:SAT_POS_RES_P;
             LOG(WARNING)<<epoch_sat_info_collect_[idxs[idx_max_omc]].t_tag.GetTimeStr(1)<<" "<<epoch_sat_info_collect_[idxs[idx_max_omc]].sat.sat_.id
                       <<" "<<(types[idx_max_omc]==GNSS_OBS_CODE?"P":"L")<<frqs[idx_max_omc]+1<<" EXCLUDED BY POST RESIDUAL res="<<larger_omcs[idx_max_omc];
+//            InitX(DIS_FLAG,SQR(60.0),ia,full_x_.data(),full_Px_.data());
+//            if(ii!=0) InitX(DIS_FLAG,SQR(60.0),ii,full_x_.data(),full_Px_.data());
+        }
+
+        if(!have_larger_res&&post&&num_valid_sat_>6&&ppp_conf_.gnssC.res_qc&&!(C.gnssC.frq_opt==FRQ_SINGLE&&C.gnssC.ion_opt==ION_IF)){
+            if(PppResidualQc(omcs,meas_var_vec)){
+                have_larger_res=true;
+            }
         }
 
         H.clear();omcs.clear();meas_var_vec.clear();types.clear();frqs.clear();idxs.clear();larger_omcs.clear();
 
         return post?have_larger_res:num_valid_sat_;
+    }
+
+    void cPppSolver::DisableX(int iter,VectorXd &x, vector<int> &par_idx, vector<double> &back_values) {
+
+        int ia=0,ii=0,num_used_frq=para_.GetGnssUsedFrqs();
+        int i,j;
+        for(i=0;i<epoch_sat_info_collect_.size();i++){
+            if(epoch_sat_info_collect_[i].stat!=SAT_USED){
+                for(j=0;j<num_used_frq;j++){
+                    if(ppp_conf_.gnssC.ion_opt>=ION_EST){
+                        ii=para_.IndexIon(epoch_sat_info_collect_[i].sat.sat_.no);
+                        back_values.push_back(x[ii]);
+                        par_idx.push_back(ii);
+                        x[ii]=DIS_FLAG;
+                    }
+                    ia=para_.IndexAmb(j,epoch_sat_info_collect_[i].sat.sat_.no);
+                    back_values.push_back(x[ii]);
+                    par_idx.push_back(ii);
+                    x[ia]=DIS_FLAG;
+                }
+            }
+        }
+
+        if(0<iter&&iter<10){
+            for(i=0;i<epoch_sat_info_collect_.size();i++){
+                for(j=0;j<num_used_frq;j++){
+                    if(!epoch_sat_info_collect_[i].vsat[j]){
+                        if(ppp_conf_.gnssC.ion_opt>=ION_EST){
+                            ii=para_.IndexIon(epoch_sat_info_collect_[i].sat.sat_.no);
+                            back_values.push_back(x[ii]);
+                            par_idx.push_back(ii);
+                            x[ii]=DIS_FLAG;
+                        }
+                        ia=para_.IndexAmb(j,epoch_sat_info_collect_[i].sat.sat_.no);
+                        back_values.push_back(x[ii]);
+                        par_idx.push_back(ii);
+                        x[ia]=DIS_FLAG;
+                    }
+                }
+            }
+        }
+
+        if(iter==-1){
+            for(i=0;i<par_idx.size();i++){
+                x[par_idx[i]]=back_values[i];
+            }
+        }
     }
 
     bool cPppSolver::PppResidualQc(vector<double>omcs,vector<double>R) {
@@ -1946,6 +1999,7 @@ namespace PPPLib{
             f=vflag_[idx_code_v[idx_max_code_v]]&0xF;
             sat_no=epoch_sat_info_collect_[idx_sat].sat.sat_.no;
             ia=para_.IndexAmb(f,sat_no);
+            InitX(DIS_FLAG,SQR(60.0),ia,full_x_.data(),full_Px_.data());
             LOG(WARNING)<<" ";
             return flag;
         }
@@ -1956,7 +2010,7 @@ namespace PPPLib{
             f=vflag_[idx_code_v[idx_max_norm_code_v]]&0xF;
             sat_no=epoch_sat_info_collect_[idx_sat].sat.sat_.no;
             ia=para_.IndexAmb(f,sat_no);
-            InitX(full_x_[ia],SQR(60.0),ia,full_x_.data(),full_Px_.data());
+            InitX(DIS_FLAG,SQR(60.0),ia,full_x_.data(),full_Px_.data());
             return flag;
         }
 
@@ -2294,23 +2348,6 @@ namespace PPPLib{
 
         if(idx==-1) InitSolver(C);
 
-
-#if 0
-        //cpt0
-        Vector3d blh(34.220254297*D2R,117.143996963*D2R,36.051);
-        base_xyz_=Blh2Xyz(blh);
-#endif
-
-#if 0
-        // m39
-        base_xyz_<<-2267796.9640,5009421.6975,3220952.5435;
-#endif
-
-#if 0
-      base_xyz_<<-2364335.6607,4870281.4902,-3360816.4321;
-      Vector3d blh=Xyz2Blh(base_xyz_);
-      cout<<blh.transpose()<<endl;
-#endif
         int i=idx,num_epochs=rover_obs_.epoch_num;
         if(idx!=-1){
             num_epochs=idx+1;

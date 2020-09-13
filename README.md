@@ -40,26 +40,29 @@ mode and INS/GNSS loosely coupled mode for real kinematic scene. Detailed inform
 * Linux user
     
   You can build and use the project follow steps 0-6:
+  
   0. open Terminal, and cd [your path]
-  1. mkdir PPPLib and cd [your path]/PPPLib
-  2. git clone https://github.com/heiwa0519/PPPLib.git
+  1. git clone https://github.com/heiwa0519/PPPLib.git
+  2. cd PPPLib
   3. mkdir build and cd [your path]/PPPLib/build
-  4. cmake..
+  4. cmake ..
+  5. make
  
   After four steps, the executable files are generated in the [your path]/PPPLib/bin folder. You can use
   PPPLib in Terminal like:
-  5. cd ../bin
-  6. ./PPPLibMain -C ../conf/PPPLib.ini -M PPP-KINE -S G -L 128 -T 2019/12/01
+  
+  0. cd ../bin
+  1. ./PPPLibMain -C ../conf/PPPLib.ini -M PPP-KINE -S G -L 128 -T 2019/12/01
+  
+  Note that the path in configuration file should set to your local dir.  
 
 * Windows user
 
   You should install the MinGW on your Windows computer for gcc compiler. It is recommended to
-  use CLion IDE for run and debug. The personal configuration using Win10 as shown in Fig. 2. Load
-  the PPPLib project, after cmake completed, you can add program arguments “-C ../conf/PPPLib.ini
-  -M PPP-KINE -S G -L 128 -T 2019/12/01” in Run/Debug Configurations and then the project is
-  ready for running.
+  use CLion IDE for run and debug. Load the PPPLib project, after cmake completed, you can add program arguments “-C ../conf/PPPLib.ini
+  -M PPP-KINE -S G -L 128 -T 2019/12/01” in Run/Debug Configurations and then the project is ready for running.
   
-  **DATASET**
+**DATASET**
   
   PPPLib provides different dataset to evaluate its performance. This dataset contains three kinds of
   data, namely static GNSS data, suburban vehicle data and urban data, which can be used to evaluate
@@ -68,7 +71,20 @@ mode and INS/GNSS loosely coupled mode for real kinematic scene. Detailed inform
   For mainland China users, please download the dataset using the [Baidu Cloud link(8888)](https://pan.baidu.com/s/1Yr5g9O_U52Wp7T_K2aPoqg#list/path=%2F).
   Also can be found in repository [PPPLib-Dataset](https://github.com/heiwa0519/PPPLib-Dataset).
   
-  **CONTACT AUTHOR**
+**ACKNOWLEDGEMENT**
+
+ First of all, I pay tribute to Mr. Tomoji Tkasu, the author of [RTKLIB](https://github.com/tomojitakasu/RTKLIB) software. I admire him for his 
+ selfless open source spirit and elegant programming. The most functions of PPPLib are refer to
+ RTKLIB. The software is also refers to [rtkexplorer](http://rtkexplorer.com/), HPRTK of Mowen Li from Shandong university,
+ the carvig software of Jinlan Su from Wuhan University, the GAMP software of Feng Zhou from
+ Shangdong University of Science and Technology, the Multi-Sensor Fusion software of Wentao
+ Fang from Wuhan University, the MG-APP software of Gongwei Xiao from Institute of Geodesy
+ and Geophysics, Chinese Academy of Sciences and the PINS software of Gongmin Yan from
+ Northwestern Polytechnic University. The easyloggingpp is used to log information and Eigen is
+ used to perform matrix operations. Thanks to the authors of above software. Many thanks are due
+ to [Steve Hillia](https://www.researchgate.net/profile/Steve_Hilla) from Notional Oceanic and Atmospheric Administration for his detailed suggestions.
+  
+**CONTACT AUTHOR**
   
   Any suggestions, corrections, and comments about PPPLib are sincerely welcomed and could be
   sent to:
