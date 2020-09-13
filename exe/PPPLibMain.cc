@@ -10,7 +10,6 @@
  * above software. Many thanks are due to Steve Hillia from Notional Oceanic and Atmospheric Administration for his
  * detailed suggestions.
  *--------------------------------------------------------------------------------------------------------------------*/
-#include <zconf.h>
 #include "CmnFunc.h"
 #include "ReadFiles.h"
 #include "Solver.h"
