@@ -100,3 +100,7 @@ mode and INS/GNSS loosely coupled mode for real kinematic scene. Detailed inform
   * QQ: 565681993
   * E-mail: cchen@cumt.edu.cn
   * Addres: School of Environment and Geo-informatics, China University of Mining and Technology
+
+
+
+**SUPPORTED BY [Guobin Chang's Lab](https://www.researchgate.net/lab/Guobin-Chang-Lab)**
