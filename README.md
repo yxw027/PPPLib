@@ -1,4 +1,5 @@
-NOTE: It is not recommended to use this repository now, the program is still under development, and many functions are not perfect.
+NOTE: The program is still under development, and some bugs still exist in PPPLib. Comments and suggestions from users 
+      are welcome, please send them to the author.
 
 **INTRODUCTION**
 
@@ -26,6 +27,13 @@ mode and INS/GNSS loosely coupled mode for real kinematic scene. Detailed inform
 * Support BDS-3 new satellites and signals
 * Convenient visualization
 
+**WILL BE**　
+
+1. GNSS/INS tightly coupled
+2. PPP ambiguity resolution
+3. Robust processing strategy for real-kinematic scene
+4. Enhance algorithms for GNSS/INS integration
+
 **HOW TO USE**
   
   PPPLib uses CMAKE for project management. Currently the software supports compile and run in
@@ -41,18 +49,18 @@ mode and INS/GNSS loosely coupled mode for real kinematic scene. Detailed inform
     
   You can build and use the project follow steps 0-6:
   
-  0. open Terminal, and cd [your path]
-  1. git clone https://github.com/heiwa0519/PPPLib.git
-  2. cd PPPLib
-  3. mkdir build and cd [your path]/PPPLib/build
-  4. cmake ..
-  5. make
+  1. open Terminal, and cd [your path]
+  2. git clone https://github.com/heiwa0519/PPPLib.git
+  3. cd PPPLib
+  4. mkdir build and cd [your path]/PPPLib/build
+  5. cmake ..
+  6. make
  
   After four steps, the executable files are generated in the [your path]/PPPLib/bin folder. You can use
   PPPLib in Terminal like:
   
-  0. cd ../bin
-  1. ./PPPLibMain -C ../conf/PPPLib.ini -M PPP-KINE -S G -L 128 -T 2019/12/01
+  1. cd ../bin
+  2. ./PPPLibMain -C ../conf/PPPLib.ini -M PPP-KINE -S G -L 128 -T 2019/12/01
   
   Note that the path in configuration file should set to your local dir.  
 
