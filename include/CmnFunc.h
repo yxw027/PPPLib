@@ -13,8 +13,11 @@
 
 #ifdef WIN32
 #define FILEPATHSEP '\\'
+#include "dirent.h"
+#include "unistd.h"
 #else
 #define FILEPATHSEP '/'
+#include <unistd.h>
 #include <dirent.h>
 #endif
 
